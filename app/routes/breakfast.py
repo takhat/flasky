@@ -33,17 +33,22 @@ def get_all_breakfasts():
 @breakfast_bp.route('/<breakfast_id>', methods=['GET'])
 def get_one_breakfast(breakfast_id):
     
-    breakfast_id = int(breakfast_id)
-    chosen_breakfast = ""
+    try:
+        breakfast_id = int(breakfast_id)
+    except ValueError:
+        return jsonify({"msg": f"invalid data type: {breakfast_id}"}), 400
+    chosen_breakfast = None
     for item in breakfast_items:
         if item.id == breakfast_id:
             chosen_breakfast = item
+    if chosen_breakfast is None:
+        return({"msg": f"could not find breakfast item with id: {breakfast_id}"}), 404
     result = {
         'id': chosen_breakfast.id,
         "name": chosen_breakfast.name,
         "rating": chosen_breakfast.rating,
         "prep_time": chosen_breakfast.prep_time
-
     } 
+    
     return jsonify(result), 200
 
