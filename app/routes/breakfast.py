@@ -20,7 +20,7 @@ breakfast_bp = Blueprint("breakfast", __name__, url_prefix="/breakfast")
 
 @breakfast_bp.route('', methods=['GET'])
 def get_all_breakfasts():
-    """converts a list of objects into a list of dictionaries"""
+   
     result = []
     for item in breakfast_items:
         item_dict = {"id": item.id, 
@@ -30,7 +30,20 @@ def get_all_breakfasts():
         result.append(item_dict)
     return jsonify(result), 200
 
+@breakfast_bp.route('/<breakfast_id>', methods=['GET'])
+def get_one_breakfast(breakfast_id):
+    
+    breakfast_id = int(breakfast_id)
+    chosen_breakfast = ""
+    for item in breakfast_items:
+        if item.id == breakfast_id:
+            chosen_breakfast = item
+    result = {
+        'id': chosen_breakfast.id,
+        "name": chosen_breakfast.name,
+        "rating": chosen_breakfast.rating,
+        "prep_time": chosen_breakfast.prep_time
 
-
-
+    } 
+    return jsonify(result), 200
 
