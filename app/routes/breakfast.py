@@ -1,5 +1,5 @@
 #1. create a class about breakfast 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, abort, make_response
 from app import db
 
 
@@ -26,36 +26,17 @@ def get_all_breakfasts():
     result = []
     all_breakfasts = Breakfast.query.all()
     for item in all_breakfasts:
-        item_dict = {"id": item.id, 
-        "name": item.name,
-        "rating":item.rating,
-        "prep_time": item.prep_time}
-        result.append(item_dict)
+        result.append(item.to_dict())
     return jsonify(result), 200
-'''
+
 @breakfast_bp.route('/<breakfast_id>', methods=['GET'])
 def get_one_breakfast(breakfast_id):
-    
-    try:
-        breakfast_id = int(breakfast_id)
-    except ValueError:
-        return jsonify({"msg": f"invalid data type: {breakfast_id}"}), 400
-    chosen_breakfast = None
-    all_breakfasts = Breakfast.query.all()
-    for item in all_breakfasts:
-        if item.id == breakfast_id:
-            chosen_breakfast = item
+    chosen_breakfast = get_breakfast_from_id(breakfast_id)
     if chosen_breakfast is None:
-        return({"msg": f"could not find breakfast item with id: {breakfast_id}"}), 404
-    result = {
-        'id': chosen_breakfast.id,
-        "name": chosen_breakfast.name,
-        "rating": chosen_breakfast.rating,
-        "prep_time": chosen_breakfast.prep_time
-    } 
+        return(jsonify({"msg": f"could not find breakfast item with id: {breakfast_id}"})), 404
     
-    return jsonify(result), 200
-'''
+    return jsonify(chosen_breakfast.to_dict()), 200
+
 @breakfast_bp.route("",methods=["POST"])
 def create_one_breakfast():
     request_body = request.get_json()
@@ -67,8 +48,44 @@ def create_one_breakfast():
     db.session.add(new_breakfast)
     db.session.commit()
 
-    return jsonify(
-        {"msg":f"successfully created breakfast with id: \
-        {new_breakfast.id}"}, 201
-        )
+    return abort(make_response(
+        {"msg":f"successfully created breakfast with id: {new_breakfast.id}"}, 201
+        ))
+@breakfast_bp.route("/<breakfast_id>", methods = ["PUT"])
+def update_one_breakfast(breakfast_id):
+    update_breakfast = get_breakfast_from_id(breakfast_id)
+    request_body = request.get_json()
+    try:
+        update_breakfast.name = request_body["name"]
+        update_breakfast.rating = request_body["rating"]
+        update_breakfast.prep_time = request_body["prep_time"]
+    except KeyError:
+        return jsonify({"msg": "Missing needed data"}), 400
+    
+    db.session.commit()
+    return jsonify({"msg": f"Successfully updated breakfast with id: {update_breakfast.id}"}), 200
+
+@breakfast_bp.route("/<breakfast_id>", methods = ["DELETE"])
+def delete_one_breakfast(breakfast_id):
+    breakfast_to_delete = get_breakfast_from_id(breakfast_id)
+    request_body = request.get_json()
+
+    db.session.delete(breakfast_to_delete)
+    db.session.commit()
+
+    return jsonify({"msg": f"Successfully deleted breakfast with id: {breakfast_to_delete.id}"}), 200
+
+def get_breakfast_from_id(breakfast_id):
+    try:
+        breakfast_id = int(breakfast_id)
+    except ValueError:
+        return abort(make_response({"msg": f"invalid data type: {breakfast_id}"}, 400))
+    chosen_breakfast = Breakfast.query.get(breakfast_id)
+
+    if chosen_breakfast is None:
+        return abort(make_response({
+            "msg": f"could not find breakfast item with id: {breakfast_id}"}, 404))
+        
+    return chosen_breakfast
+
 

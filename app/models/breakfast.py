@@ -6,4 +6,12 @@ class Breakfast(db.Model):
     rating = db.Column(db.Float)
     prep_time = db.Column(db.Integer)
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "rating": self.rating,
+            "prep_time": self.prep_time
+        } 
+
 
