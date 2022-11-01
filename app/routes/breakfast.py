@@ -3,38 +3,24 @@ from flask import Blueprint, jsonify, request, abort, make_response
 from app import db
 
 
-'''class Breakfast:
-    def __init__(self, id, name, rating, prep_time):
-        self.id = id
-        self.name = name
-        self.rating = rating
-        self.prep_time = prep_time
-
-breakfast_items = [
-    Breakfast(1, "Pancakes", 4, 10),
-    Breakfast(2, "Toast", 3, 15), 
-    Breakfast(3, "Cereal", 1, 1), 
-    Breakfast(4, "Oatmeal", 3, 10)
-'''
-
 breakfast_bp = Blueprint("breakfast", __name__, url_prefix="/breakfast")
 from app.models.breakfast import Breakfast
 
 @breakfast_bp.route('', methods=['GET'])
 def get_all_breakfasts():
-   
+    rating_query_value = request.args.get("rating")
+    if rating_query_value is not None:
+        breakfasts = Breakfast.query.filter_by(rating = rating_query_value)
+    else:
+        breakfasts = Breakfast.query.all()
     result = []
-    all_breakfasts = Breakfast.query.all()
-    for item in all_breakfasts:
+    for item in breakfasts:
         result.append(item.to_dict())
     return jsonify(result), 200
 
 @breakfast_bp.route('/<breakfast_id>', methods=['GET'])
 def get_one_breakfast(breakfast_id):
     chosen_breakfast = get_breakfast_from_id(breakfast_id)
-    if chosen_breakfast is None:
-        return(jsonify({"msg": f"could not find breakfast item with id: {breakfast_id}"})), 404
-    
     return jsonify(chosen_breakfast.to_dict()), 200
 
 @breakfast_bp.route("",methods=["POST"])
@@ -87,5 +73,3 @@ def get_breakfast_from_id(breakfast_id):
             "msg": f"could not find breakfast item with id: {breakfast_id}"}, 404))
         
     return chosen_breakfast
-
-
