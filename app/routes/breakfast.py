@@ -26,11 +26,7 @@ def get_one_breakfast(breakfast_id):
 @breakfast_bp.route("",methods=["POST"])
 def create_one_breakfast():
     request_body = request.get_json()
-    new_breakfast = Breakfast(
-        name = request_body["name"], 
-        rating = request_body["rating"], 
-        prep_time = request_body["prep_time"]
-        )
+    new_breakfast = Breakfast.from_dict(request_body)
     db.session.add(new_breakfast)
     db.session.commit()
 
