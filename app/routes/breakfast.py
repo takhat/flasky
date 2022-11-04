@@ -20,7 +20,7 @@ def get_all_breakfasts():
 
 @breakfast_bp.route('/<breakfast_id>', methods=['GET'])
 def get_one_breakfast(breakfast_id):
-    chosen_breakfast = get_breakfast_from_id(breakfast_id)
+    chosen_breakfast = get_model_from_id(Breakfast, breakfast_id)
     return jsonify(chosen_breakfast.to_dict()), 200
 
 @breakfast_bp.route("",methods=["POST"])
@@ -35,7 +35,7 @@ def create_one_breakfast():
         ))
 @breakfast_bp.route("/<breakfast_id>", methods = ["PUT"])
 def update_one_breakfast(breakfast_id):
-    update_breakfast = get_breakfast_from_id(breakfast_id)
+    update_breakfast = get_model_from_id(Breakfast, breakfast_id)
     request_body = request.get_json()
     try:
         update_breakfast.name = request_body["name"]
@@ -49,7 +49,7 @@ def update_one_breakfast(breakfast_id):
 
 @breakfast_bp.route("/<breakfast_id>", methods = ["DELETE"])
 def delete_one_breakfast(breakfast_id):
-    breakfast_to_delete = get_breakfast_from_id(breakfast_id)
+    breakfast_to_delete = get_model_from_id(Breakfast, breakfast_id)
     request_body = request.get_json()
 
     db.session.delete(breakfast_to_delete)
@@ -57,15 +57,15 @@ def delete_one_breakfast(breakfast_id):
 
     return jsonify({"msg": f"Successfully deleted breakfast with id: {breakfast_to_delete.id}"}), 200
 
-def get_breakfast_from_id(breakfast_id):
+def get_model_from_id(cls, model_id):
     try:
-        breakfast_id = int(breakfast_id)
+        model_id = int(model_id)
     except ValueError:
-        return abort(make_response({"msg": f"invalid data type: {breakfast_id}"}, 400))
-    chosen_breakfast = Breakfast.query.get(breakfast_id)
+        return abort(make_response({"msg": f"invalid data type: {model_id}"}, 400))
+    chosen_object = cls.query.get(model_id)
 
-    if chosen_breakfast is None:
+    if chosen_object is None:
         return abort(make_response({
-            "msg": f"could not find breakfast item with id: {breakfast_id}"}, 404))
+            "msg": f"could not find {cls.__name__.lower()} item with id: {model_id}"}, 404))
         
-    return chosen_breakfast
+    return chosen_object
