@@ -28,11 +28,11 @@ def create_one_menu():
 def get_breakfasts_for_menu(menu_id):
     menu = get_model_from_id(Menu, menu_id)
 
-    breakfasts = []
-    for item in menu.breakfast_items:
-        breakfasts.append(item.to_dict())
+    # breakfasts = []
+    # for item in menu.breakfast_items:
+    #     breakfasts.append(item.to_dict())
 
-    #breakfasts = menu.get_breakfast_list()
+    breakfasts = menu.get_breakfast_list()
     
     return jsonify(breakfasts), 200
 
