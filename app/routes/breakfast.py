@@ -1,10 +1,11 @@
 #1. create a class about breakfast 
 from flask import Blueprint, jsonify, request, abort, make_response
 from app import db
+from app.models.breakfast import Breakfast
+from app.models.menu import Menu
 
 
 breakfast_bp = Blueprint("breakfast", __name__, url_prefix="/breakfast")
-from app.models.breakfast import Breakfast
 
 @breakfast_bp.route('', methods=['GET'])
 def get_all_breakfasts():
@@ -13,9 +14,12 @@ def get_all_breakfasts():
         breakfasts = Breakfast.query.filter_by(rating = rating_query_value)
     else:
         breakfasts = Breakfast.query.all()
+    
     result = []
+    
     for item in breakfasts:
         result.append(item.to_dict())
+    
     return jsonify(result), 200
 
 @breakfast_bp.route('/<breakfast_id>', methods=['GET'])
@@ -33,10 +37,13 @@ def create_one_breakfast():
     return abort(make_response(
         {"msg":f"successfully created breakfast with id: {new_breakfast.id}"}, 201
         ))
+
 @breakfast_bp.route("/<breakfast_id>", methods = ["PUT"])
 def update_one_breakfast(breakfast_id):
     update_breakfast = get_model_from_id(Breakfast, breakfast_id)
+    
     request_body = request.get_json()
+    
     try:
         update_breakfast.name = request_body["name"]
         update_breakfast.rating = request_body["rating"]
@@ -57,6 +64,24 @@ def delete_one_breakfast(breakfast_id):
 
     return jsonify({"msg": f"Successfully deleted breakfast with id: {breakfast_to_delete.id}"}), 200
 
+@breakfast_bp.route("/<breakfast_id>", methods=["PATCH"])
+def add_menu_to_breakfast(breakfast_id):
+    breakfast = get_model_from_id(Breakfast, breakfast_id)
+
+    request_body = request.get_json()
+
+    try:
+        menu_id = request_body["menu_id"]
+    except KeyError:
+        return jsonify({"msg": "Missing menu id"}), 400
+    
+    menu = get_model_from_id(Menu, menu_id)
+
+    breakfast.menu = menu
+
+    db.session.commit()
+
+    return jsonify({"msg": f"added {breakfast.name} to {menu_id}"})
 def get_model_from_id(cls, model_id):
     try:
         model_id = int(model_id)
@@ -69,3 +94,4 @@ def get_model_from_id(cls, model_id):
             "msg": f"could not find {cls.__name__.lower()} item with id: {model_id}"}, 404))
         
     return chosen_object
+
